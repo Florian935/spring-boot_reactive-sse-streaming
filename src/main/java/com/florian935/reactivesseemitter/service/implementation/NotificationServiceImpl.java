@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import static lombok.AccessLevel.PRIVATE;
@@ -16,8 +17,8 @@ import static lombok.AccessLevel.PRIVATE;
 public class NotificationServiceImpl implements NotificationService {
 
     Sinks.Many<String> multicastReplay = Sinks.many().replay().all();
-    Sinks.Many<String> multicastShare = Sinks.many().multicast().onBackpressureBuffer();
     Sinks.Many<String> multicastShareWithLatestEmittedValue = Sinks.many().replay().latest();
+    Sinks.Many<String> multicastShare = Sinks.many().multicast().onBackpressureBuffer(1, false);
 
     @Override
     public Flux<ServerSentEvent<String>> replayAll(String data) {
@@ -35,7 +36,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public Flux<ServerSentEvent<String>> share(String data) {
-
         multicastShare.tryEmitNext(data);
 
         return multicastShare.asFlux()
